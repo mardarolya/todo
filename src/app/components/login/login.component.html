@@ -1,0 +1,56 @@
+<div class="overlay">
+  <div class="center">
+    <div class="lang_panel">
+      <button type="button" class="change_lang" (click)="changeLang('en')" #langEn>EN</button>
+      <button type="button" class="change_lang" (click)="changeLang('ua')" #langUa>УКР</button>
+      <button type="button" class="change_lang" (click)="changeLang('ru')" #langRu>РУС</button>
+    </div>
+    <div class="logo">
+        <h2 translate>DAILY_DOING</h2>
+    </div>
+    <div class="slogan">
+        <span translate>DO_SIMPLE</span>
+    </div>
+
+    <form action="" class="login-form">
+        <div>
+            <input type="text" placeholder="{{ 'LOGIN' | translate }}" id="login" name="username" [(ngModel)]="user.username" #userName (focus)="removeError()">
+        </div>
+        <div>
+            <input type="password" placeholder="{{ 'PASSWORD' | translate }}" id="password" name="password" [(ngModel)]="user.password" #userPassword (focus)="removeError()">
+        </div>
+        <div class="todo-checkbox" style="width: 100%">
+            <input type="checkbox" id="remember_me"  name="password" [(ngModel)]="rememberUser">
+            <label for="remember_me" translate>REMEMBER_ME</label>
+        </div>
+        <div>
+            <button type="button" (click)="checkUser()" class="sign_in" translate>SIGN_IN</button>
+            <span *ngIf="hasError" style="color: red" translate>REQUIRED</span>
+        </div>
+    </form>
+  </div>
+
+  <div class="modal-contain" *ngIf="newAccount">
+    <div class="modal">
+      <h3 translate>NEW_ACCOUNT</h3>
+      <p translate>NEW_ACCOUNT_TEXT</p>
+      <div class="group-button">
+        <button type="button" class="success" translate (click)="createUser()">CRETE_ACCOUNT</button>
+        <button type="button" class="info" translate (click)="newAccount = false">BACK_TO_LOGIN</button>
+      </div>
+    </div>
+  </div>   
+
+
+  <div class="modal-contain" *ngIf="existAccount">
+    <div class="modal">
+      <h3 translate>ACCOUNT_EXISTS</h3>
+      <p translate>ACCOUNT_EXISTS_TEXT</p>
+      <div class="group-button">
+        <button type="button" class="info" translate (click)="existAccount = false">BACK_TO_LOGIN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  

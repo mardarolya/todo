@@ -1,0 +1,77 @@
+<div class="conteiner-setting-task">
+    <div class="task grid">
+      <div class="grid-item">
+          <input type="text" placeholder="{{ 'TASK_NAME' | translate }}" class="name-task" (focus)="removeError()" [(ngModel)]="task.name" #taskName>
+      </div>
+      <div class="grid-item"><button type="button" (click)="taskSave()"><span class="iconOk"></span></button></div>
+      <div class="grid-item"><button type="button" (click)="discardChanges()"><span class="iconCancel"></span></button></div>
+    </div>
+    <div class="project"><p-dropdown [options]="projects" [(ngModel)]="project"></p-dropdown></div>
+    <div class="task-set">
+      <div class="task-settings grid">
+        <div class="grid-item">
+            <input type="radio" name="regular" id="regular_task" value="regular_task" [(ngModel)]="regularTask">
+            <label for="regular_task" translate>REGULAR_TASK</label>
+        </div>
+        <div class="grid-item">
+            <input type="radio" name="regular" id="once_task" value="once_task" [(ngModel)]="regularTask">
+            <label for="once_task" translate>ONCE_TASK</label>
+        </div>
+      </div>
+      <div [ngClass]="{'disable-setting': regularTask == 'once_task'}">
+        <div class="task-settings grid">
+          <input type="radio" name="regularity" id="every_day" value="everyday" [(ngModel)]="task.type" (click)="cleanData()">
+          <label for="every_day" translate>EVERY_DAY</label>
+        </div>  
+        
+        <div class="task-settings grid">
+          <div class="grid-item">
+              <input type="radio" name="regularity" id="week_days" value="week" [(ngModel)]="task.type" (click)="cleanData()">
+              <label for="week_days" translate>WEEK_DAYS</label>
+          </div>
+          <div class="grid-item">
+              <div class="buttons-day">
+                <button *ngFor="let weekd of weekDays; let i = index" [ngClass]="{'choosen-day':  (task.days && task.days.indexOf(i) != -1)}" class="but-day" type="button" (click)="chooseDay(i)" translate [disabled]="task.type != 'week'">{{weekd}}</button>
+              </div>
+          </div>
+        </div>
+        
+        <div class="task-settings grid">
+          <div class="grid-item">
+              <input type="radio" name="regularity" id="month_days" value="month" [(ngModel)]="task.type" (click)="cleanData()">
+              <label for="month_days" translate>MONTH_DAYS</label>
+          </div>
+          <div class="grid-item"> 
+              <div *ngFor="let day of spinnerDays; let i = index">
+                <p-spinner size="30" [min]="1" [max]="31" [size]="3" [(ngModel)]="spinnerDays[i]" [disabled]="task.type != 'month'"></p-spinner>
+                <span *ngIf="i == 0">
+                  <button type="button" (click)="spinnerDays.push(1)" class="add-item-button"  [disabled]="task.type != 'month'"><span class="icon icon-add-item"></span></button>
+                </span>
+                <span *ngIf="i != 0">
+                  <button type="button" (click)="spinnerDays.splice(i, 1)" class="add-item-button" [disabled]="task.type != 'month'"><span class="icon icon-minus-item"></span></button>
+                </span>
+              </div>              
+          </div>
+        </div>
+
+        <div class="task-settings grid"> 
+          <div class="grid-item">
+              <input type="radio" name="regularity" id="year_days" value="year" [(ngModel)]="task.type" (click)="cleanData()">
+              <label for="year_days" translate>YEAR_DAYS</label>
+          </div>
+          <div class="grid-item">
+              <div *ngFor="let day of calendarDays; let i = index">
+                <p-calendar id="year_day" name="year_dat" [(ngModel)]="calendarDays[i]" [inputStyle]="{'width': '100%'}"
+                  [showIcon]="true" icon="icon-calendar" (onInput)="inputDatepicker($event)"
+                  (onBlur)="checkDatepickerValue($event)" (keydown)="keyDownDatepicker($event)" 
+                  [locale]="currentLang" placeholder="  .  .    " [monthNavigator]="true" [yearNavigator]="true" yearRange="1910:2050" 
+                  dateFormat="dd.mm.yy" [disabled]="task.type != 'year'">
+                </p-calendar>
+                <button type="button" (click)="pushDay()" class="add-item-button" *ngIf="i == 0" [disabled]="task.type != 'year'"><span class="icon icon-add-item"></span></button>
+                <button type="button" (click)="calendarDays.splice(i, 1)" class="add-item-button" *ngIf="i != 0" [disabled]="task.type != 'year'"><span class="icon icon-minus-item"></span></button>
+              </div>              
+          </div>      
+        </div>    
+      </div>
+    </div>
+</div>

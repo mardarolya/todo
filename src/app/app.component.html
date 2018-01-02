@@ -1,0 +1,128 @@
+<!--login-->
+<div *ngIf="isLogged == false">
+    <app-login (authorisation)="registerSuccess($event)"></app-login>
+</div>
+
+<div class="main-conteiner" *ngIf="isLogged == true"> 
+  <div class="side user-panel" [ngClass]="{'hidden': hideMenu}">
+    <div class="user grid">
+      <div class="grid-item">
+        <div class="circle"><span class="icon-user-circle-o"></span></div>
+      </div>
+      <div class="grid-item text">
+        <h3 class="user-name">{{user.username}}</h3>
+      </div>
+      <div class="grid-item">
+        <button class="tupical-button" (click)="showStat()"><span class="icon icon-angellist"></span></button>
+      </div>
+      <div class="grid-item">
+        <button class="tupical-button" (click)="goOut()"><span class="icon icon-logout"></span></button>
+      </div>
+      <div class="grid-item" *ngIf="smallScreen">
+          <button class="tupical-button"><span class="icon icon-turn-menu" [ngClass]="{'turn-menu': hideMenu}" (click)="turnMenu()"></span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="side project-panel" [ngClass]="{'hidden': hideMenu}">
+    <button class="add-project icon-add tupical-button" *ngIf="!isAddingProject" (click)="isAddingProject = true"> 
+      <span class="label" translate>ADD_PROJECT</span>
+    </button>
+
+    <div class="project grid" *ngIf="isAddingProject">
+      <div class="grid-item">
+        <input type="text" placeholder="{{ 'PROJECT_NAME' | translate }}" (focus)="removeError()" #projectName>
+      </div>
+      <div class="grid-item"><button type="button" class="tupical-button" (click)="projectAdd(projectName.value)"><span class="iconOk"></span></button></div>
+      <div class="grid-item"><button type="button" class="tupical-button" (click)="isAddingProject = false"><span class="iconCancel"></span></button></div>
+    </div>
+
+    <div *ngFor="let project of userProjects">
+      <div class="project grid" *ngIf="!project.isEdditing">
+        <div class="grid-item"><button class="name-project" [ngClass]="{'choosen_project': project._id == currentProjectId}" (click)="getTasks(project._id)">{{project.name}}</button></div>
+        <div class="grid-item"><button type="button" class="tupical-button" (click)="project.isEdditing = true"><span class="icon icon-edit"></span></button></div>
+        <div class="grid-item"><button type="button" class="tupical-button" (click)="projectDelete(project)"><span class="icon icon-delete"></span></button></div>
+      </div>      
+    
+      <div class="project grid" *ngIf="project.isEdditing">
+        <div class="grid-item">
+          <input type="text" placeholder="{{ 'PROJECT_NAME' | translate }}" (focus)="removeError()" #projectName [value]="project.name">
+        </div>
+        <div class="grid-item"><button type="button" class="tupical-button" (click)="projectEdit(project._id, projectName.value)"><span class="iconOk"></span></button></div>
+        <div class="grid-item"><button type="button" class="tupical-button" (click)="project.isEdditing = false"><span class="iconCancel"></span></button></div>
+      </div>
+
+    </div>
+
+    <button class="add-project tupical-button" (click)="getTasks('any')" [ngClass]="{'choosen_project': currentProjectId == 'any'}"> 
+      <span class="label" translate>SHOW_ALL_TASKS</span>
+    </button>
+  </div> 
+ 
+ <div class="main" [ngClass]="{'full-width': hideMenu}">
+   <div class="actions grid">
+      <div class="grid-item"><button class="tupical-button" (click)="turnMenu()"><span class="icon icon-turn-menu" [ngClass]="{'turn-menu': hideMenu}"></span></button></div>
+      <div class="grid-item" style="text-align: center"><p-calendar id="year_day" name="year_dat" [(ngModel)]="dayForTasks" [inputStyle]="{'width': '100%'}"
+                  [showIcon]="true" icon="icon-calendar" (onInput)="inputDatepicker($event)" (onSelect) = "selectDate()"
+                  (onBlur)="checkDatepickerValue($event)" (keydown)="keyDownDatepicker($event)" 
+                  [locale]="currentLang" placeholder="  .  .    " [monthNavigator]="true" [yearNavigator]="true" yearRange="1910:2050" 
+                  dateFormat="dd.mm.yy"></p-calendar>
+      </div>
+      <div class="grid-item"><button class="tupical-button" (click)="additingTask = true"><span class="icon icon-add-task"></span></button></div>
+   </div>
+
+   <div class="add-task" *ngIf="additingTask">
+     <app-task [user]="user" [dayForOnceTask]="dayForTasks" [project]="currentProjectId" (resultTask)="resultTask($event)"></app-task>    
+   </div>
+
+   <div class="task-list" *ngIf = "currentTasks.length > 0">
+     <h2><span translate>{{dayState}}</span><span> ({{dayString}})</span> </h2>
+     <div class="list-header">
+       <span style="margin-right: 10px"><span translate>TOTAL_COUNTS</span><span>{{currentTasks.length}}</span></span>
+       <span><span translate>COMPLETED</span><span>{{tasksCheckCount}}</span></span>
+     </div>
+     <div class="list-body">
+        <div class="task grid" *ngFor="let task of currentTasks">
+          <div class="grid-item">
+            <div class="todo-checkbox">
+              <input type="checkbox" id="chk_{{task._id}}" (click)="checkTask(task._id)" ([ngModal])="task.isCheck">
+              <label for="chk_{{task._id}}" *ngIf="dayState == 'TODAY'"></label>
+            </div>
+          </div>
+          <div class="grid-item"><span class="name-task">{{task.name}}</span></div>
+          <div class="grid-item"><button class="tupical-button" (click)="deleteTask(task)"><span class="icon icon-delete"></span></button></div>
+        </div>
+     </div>
+   </div>
+
+   <div class="tasks-done" *ngIf="!currentTasks || currentTasks.length == 0">
+     <div class="picture">
+       <span class="icon-thumbs-up" translate>ALL_DONE</span><br/>
+     </div>
+   </div>
+
+   <div class="overlay-grey" *ngIf="showModal">
+    <div class="modal"> 
+      <h3 translate>{{modalTxt}}</h3>
+      <div class="group-button">
+        <button type="button" class="success" translate (click)="btnYesClick()">YES</button>
+        <button type="button" class="info" translate (click)="cancel()">NO</button>
+      </div>
+    </div>
+   </div>
+
+   <div class="overlay-grey" *ngIf="showModalInfo">
+    <div class="modal"> 
+      <h3 translate>{{modalInfoTxt}}</h3>
+      <ul>
+        <li *ngFor="let item of allTasksProgress">
+          {{item.name}} : {{item.count}}
+        </li>
+      </ul>
+      <div class="group-button">
+        <button type="button" class="success" translate (click)="showModalInfo = false; allTasksProgress = []">CLOSE</button>
+      </div>
+    </div>
+   </div>
+
+ </div>

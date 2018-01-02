@@ -1,0 +1,22 @@
+{
+    "port": 27017,
+    "mongoose": {
+        "uri": "mongodb://localhost/todo",
+        "options": {
+            "server": {
+                "socketOptions": {
+                    "keepAlive": 1
+                }
+            }
+        }
+    },
+    "session": {
+        "secret": "Zgjirf",
+        "key": "sid",
+        "cookie": {
+            "path": "/",
+            "httpOnly": true,
+            "maxAge": null
+        }
+    }    
+}
