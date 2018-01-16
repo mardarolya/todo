@@ -108,6 +108,8 @@ var Project = mongoose.model('Project', projectSchema);
 function getProjects(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*'); 
     var userName = req.params.name;
+    var today = req.params.today;
+    TodayTask.find({$not:{today: today}}).remove().exec();
     async.waterfall([
         function(callback) {
             User.findOne({username: req.params.name}, callback);
@@ -129,7 +131,7 @@ function getProjects(req, res, next) {
             }  
         }
     ], function(err, projects, message) {
-        if (err) return next(err);       
+        if (err) return next(err);  
         res.send({
             projects: projects,
             message: message
@@ -189,10 +191,22 @@ var taskSchema = new Schema({
         type: Date
     },
     type: String,
-    days: []
+    days: [],
+    isCheck: Boolean
+});
+
+var todayTaskSchema = new Schema({
+    task_id: {
+        type: String,
+        required: true
+    }, 
+    today: {
+        type: String
+    }
 });
 
 var Task = mongoose.model('Task', taskSchema);
+var TodayTask = mongoose.model('TodayTask', todayTaskSchema);
 
 function addTask(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*'); 
@@ -302,54 +316,81 @@ function removeProjectAndTasks(req, res, next) {
 
 var resultTask = [];
 
-function getTasksByProject(project_id, date, res, lastPart) {
+function getTasksByProject(project_id, date, res, lastPart, callbackHigh) {
     var choosenDate = (date.toString()).split(" ").slice(0, 4).join(" ");
 
     Task.find({project_id: project_id}, function (err, tasks) {
         if (err) next(err);
         var month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        for(var i=0, max=tasks.length; i < max; i ++) {
-            var taskDate = (tasks[i].dayForOnceTask.toString()).split(" ").slice(0, 4).join(" ");
-            if (tasks[i].regular == false && taskDate == choosenDate) { 
-                resultTask.push(tasks[i]);
-                continue;
-            }
-            var showTask = false;
-            if (taskDate.split(" ")[3] <= choosenDate.split(" ")[3] &&
-                month.indexOf(taskDate.split(" ")[1]) <= month.indexOf(choosenDate.split(" ")[1]) &&
-                taskDate.split(" ")[2] <= choosenDate.split(" ")[2]) {
-                    showTask = true;
+        if (tasks.length == 0) {
+            if (lastPart == true) {
+                res.send(resultTask);
             } else {
-                showTask = false;
+                callbackHigh()
             }
-            if (tasks[i].regular == true && showTask) {
-                switch(tasks[i].type) {
-                    case "everyday":
-                        resultTask.push(tasks[i]);
-                        break;
-                    case "week":
-                        var d = new Date(date);
-                        var weekDay = d.getDay();
-                        if (tasks[i].days.indexOf(weekDay) != -1)
-                            resultTask.push(tasks[i]);       
-                        break;
-                    case "month":
-                        var dM = new Date(date);
-                        var monthDay = dM.getDate();
-                        if (tasks[i].days.indexOf(monthDay) != -1)
-                            resultTask.push(tasks[i]);
-                        break;
-                    case "year":
-                        if (tasks[i].days.indexOf(date) != -1)
-                            resultTask.push(tasks[i]);
-                        break;
+        } else {
+            async.each(tasks, function(task, callback){
+                var taskDate = (task.dayForOnceTask.toString()).split(" ").slice(0, 4).join(" ");
+                TodayTask.findOne({task_id: task._id}, function(err, todaytask){
+                    if (err) callback(err);
+                    task["isCheck"] = false;                    
+                    if (todaytask) {
+                        task["isCheck"] = true;
+                    } else {
+                        task["isCheck"] = false;
+                    }
+                    
+                    if (task.regular == false && taskDate == choosenDate) { 
+                        resultTask.push(task);
+                        callback();
+                    } else {
+                        var showTask = false;
+                        if (taskDate.split(" ")[3] <= choosenDate.split(" ")[3] &&
+                            month.indexOf(taskDate.split(" ")[1]) <= month.indexOf(choosenDate.split(" ")[1]) &&
+                            taskDate.split(" ")[2] <= choosenDate.split(" ")[2]) {
+                                showTask = true;
+                        } else {
+                            showTask = false;
+                        }
+                        if (task.regular == true && showTask) {
+                            switch(task.type) {
+                                case "everyday":
+                                    resultTask.push(task);
+                                    break;
+                                case "week":
+                                    var d = new Date(date);
+                                    var weekDay = d.getDay();
+                                    if (task.days.indexOf(weekDay) != -1)
+                                        resultTask.push(task);       
+                                    break;
+                                case "month":
+                                    var dM = new Date(date);
+                                    var monthDay = dM.getDate();
+                                    if (task.days.indexOf(monthDay) != -1)
+                                        resultTask.push(task);
+                                    break;
+                                case "year":
+                                    if (task.days.indexOf(date) != -1)
+                                        resultTask.push(task);
+                                    break;
+                            }
+                        }  
+                        callback();         
+                    }
+                });                
+            }, function(err) {
+                if(err){
+                    next(err);
+                } else {
+                    if (lastPart == true) {
+                        res.send(resultTask);
+                    } else {
+                        callbackHigh()
+                    }
                 }
-            }
+            })  
         }
-
-        if (lastPart == true) {
-            res.send(resultTask);
-        }
+              
     })
 }
 
@@ -361,22 +402,19 @@ function getTasksList(req, res, next) {
             if (err) next(err);
             Project.find({id_user: user._id}, function(err, projects){
                 if (err) next(err);
-                for(var j = 0, maxx=projects.length; j< maxx; j++) {
-                        if (j == (maxx - 1)) {
-                            // console.log(projects[j].project_id);
-                            getTasksByProject(projects[j]._id, req.params.date, res, true); 
-                        } else {
-                            getTasksByProject(projects[j]._id, req.params.date, res, false); 
-                        }               
-                    }   
+                async.each(projects, function(project, callback){
+                    getTasksByProject(project._id, req.params.date, res, false, callback); 
+                }, function(err) {
+                    if (err) next(err);
+                    res.send(resultTask);
+                })
             });
         })
         
     } else {
-        getTasksByProject(req.params.project_id, req.params.date, res, true); 
+        getTasksByProject(req.params.project_id, req.params.date, res, true, null); 
     }
 }
-
 
 var completedTask = new Schema({
     task_id: {
@@ -391,6 +429,7 @@ var CompletedTask = mongoose.model('CompletedTask', completedTask);
 function completeTask(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*'); 
     var task_id = req.params.task_id;
+    var today = req.params.today;
     CompletedTask.findOne({ task_id: task_id }, function (err, task){
         if (err) next(err);
         if (task) {
@@ -401,9 +440,17 @@ function completeTask(req, res, next) {
                 daysComplete: 1
             });
         }
-        task.save(function(err){
+        var complTask = new TodayTask({
+            task_id: req.params.task_id,
+            today: today
+        });
+
+        complTask.save(function(err){
             if (err) next(err);
-            res.send({message: "ok"});
+            task.save(function(err){
+                if (err) next(err);
+                res.send({message: "ok"});
+            });
         });
     });
 }

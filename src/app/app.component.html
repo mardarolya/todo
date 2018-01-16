@@ -85,7 +85,7 @@
         <div class="task grid" *ngFor="let task of currentTasks">
           <div class="grid-item">
             <div class="todo-checkbox">
-              <input type="checkbox" id="chk_{{task._id}}" (click)="checkTask(task._id)" ([ngModal])="task.isCheck">
+              <input type="checkbox" id="chk_{{task._id}}" (click)="checkTask(task._id)" ([ngModal])="task.isCheck" [checked]="task.isCheck" >
               <label for="chk_{{task._id}}" *ngIf="dayState == 'TODAY'"></label>
             </div>
           </div>
@@ -97,7 +97,7 @@
 
    <div class="tasks-done" *ngIf="!currentTasks || currentTasks.length == 0">
      <div class="picture">
-       <span class="icon-thumbs-up" translate>ALL_DONE</span><br/>
+       <span class="icon-angellist" translate>NO_TASK</span><br/>
      </div>
    </div>
 

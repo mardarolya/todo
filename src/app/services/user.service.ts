@@ -23,8 +23,15 @@ export class Task {
 export class UserService {
     private headers = new Headers({ 'Content-Type': 'application/x-www-form-urlencoded' });
     public settings: Settings = new Settings();
+    public today: string;
 
-    constructor(private http: Http) {}
+    constructor(private http: Http) {
+        let newDate = new Date();
+        let day = newDate.getDate();
+        let month = newDate.getMonth() + 1;
+        let year = newDate.getFullYear();
+        this.today = day + "." + month + "." + year;
+    }
 
     public returnGet(pathQuery, success){
         return this.http
@@ -66,7 +73,7 @@ export class UserService {
     }
 
     public getProjects(user: User, success: ((result: any) => void)) {
-        let pathQuery = "getProjects/" + user.username;
+        let pathQuery = "getProjects/" + user.username + "/" + this.today;
 
         return this.returnGet(pathQuery, success);
     }
@@ -136,7 +143,8 @@ export class UserService {
     }
 
     public completeTask(task_id: string, success: ((result: any) => void)) {
-        let pathQuery = "completeTask/" + task_id;
+
+        let pathQuery = "completeTask/" + task_id + "/" + this.today;
 
         return this.returnGet(pathQuery, success);
     }

@@ -212,9 +212,13 @@ export class AppComponent extends ParentClass {
       this.currentTasks = result;
       for (let i = 0, max = this.currentTasks.length; i < max; i++) {
           this.currentTasks[i].isEdditing = false;
-          this.currentTasks[i].isCheck = false;
+          if (this.currentTasks[i].isCheck == true) {
+            this.checkTask(this.currentTasks[i]._id)
+          }
+          // this.currentTasks[i].isCheck = false;
       }
       this.checkSize();
+      this.getParamsTasks();
     })    
   }
 
@@ -257,6 +261,7 @@ export class AppComponent extends ParentClass {
               break;
             }
           }   
+          this.getParamsTasks();
         }
       });
     }

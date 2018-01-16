@@ -49,7 +49,7 @@ app.post('/addUser', function(req, res, next){
     services.addUser(req, res, next);
 });
 
-app.get('/getProjects/:name', function(req, res, next){
+app.get('/getProjects/:name/:today', function(req, res, next){
     services.getProjects(req, res, next);
 });
 
@@ -85,7 +85,7 @@ app.get('/getTasksList/:username/:project_id/:date', function(req, res, next){
     services.getTasksList(req, res, next);
 });
 
-app.get('/completeTask/:task_id', function(req, res, next){
+app.get('/completeTask/:task_id/:today', function(req, res, next){
     services.completeTask(req, res, next);
 });
 
